@@ -1,6 +1,8 @@
 # hsi_plugin_example
 
-Demonstrates how to use the hsi_plugin plugin.
+The plugin makes LabView built dll `hsi.dll` accessible to flutter codes. The dynamic load library is the backend of the HyperSpectral Imaging system. Another important library is the `atmcd64d.dll` file used to communicate with Andor iXon camera.
+
+Both dll files can be find in the `lib/dll` directory. For any flutter program to run this plugin properly, `hsi.dll` should be placed in `bin/dll` and `atmcd64d.dll` in `\build\windows\runner\Debug` (namely where the host executable runs) from the root of flutter project. 
 
 ## Getting Started
 
