@@ -13,11 +13,27 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 
-typedef DllVoidFun = Void Function();
-typedef VoidFun = void Function();
-
 typedef DllDoubleFun = Double Function(Double input);
 typedef DoubleFun = double Function(double a);
+
+typedef DllCloseIxonFun = Void Function(Pointer<Double> temp);
+typedef CloseIxonFun = void Function(Pointer<Double> temp);
+
+typedef DllInitIxonFun = Uint32 Function(
+    Pointer<Utf8> model,
+    Pointer<Double> vsArray,
+    Pointer<Double> hsArray,
+    Int32 modelLen,
+    Int32 vsArrayLen,
+    Int32 hsArrayLen);
+typedef InitIxonFun = int Function(Pointer<Utf8> model, Pointer<Double> vsArray,
+    Pointer<Double> hsArray, int modelLen, int vsArrayLen, int hsArrayLen);
+
+typedef DllSetShutterModeFun = Void Function(Int32 mode);
+typedef SetShutterModeFun = void Function(int mode);
+
+typedef DllIxonLiveViewFun = Void Function();
+typedef IxonLiveViewFun = void Function();
 
 final hsidllpath = path.join(Directory.current.path, 'bin', 'dll', 'hsi.dll');
 final hsilib = DynamicLibrary.open(hsidllpath);
@@ -25,6 +41,39 @@ final hsilib = DynamicLibrary.open(hsidllpath);
 final interOpTestPointer =
     hsilib.lookup<NativeFunction<DllDoubleFun>>('InterOpTest');
 final interOpTest = interOpTestPointer.asFunction<DoubleFun>();
+
+final initIxon = hsilib.lookupFunction<DllInitIxonFun, InitIxonFun>('InitIxon');
+Future<int> asyncInitIxon(
+    Pointer<Utf8> model,
+    Pointer<Double> vsArray,
+    Pointer<Double> hsArray,
+    int modelLen,
+    int vsArrayLen,
+    int hsArrayLen) async {
+  final Completer<int> _completer = Completer();
+  Future.delayed(const Duration(milliseconds: 500), () {
+    _completer.complete(
+        initIxon(model, vsArray, hsArray, modelLen, vsArrayLen, hsArrayLen));
+  });
+  return _completer.future;
+}
+
+final closeixon =
+    hsilib.lookupFunction<DllCloseIxonFun, CloseIxonFun>('CloseIxon');
+Future<void> asyncCloseIxon(Pointer<Double> temp) async {
+  final Completer<void> _completer = Completer();
+  Future.delayed(const Duration(milliseconds: 500), () {
+    closeixon(temp);
+    _completer.complete();
+  });
+  return _completer.future;
+}
+
+final setShutterMode = hsilib
+    .lookupFunction<DllSetShutterModeFun, SetShutterModeFun>('SetShutterMode');
+
+final ixonLiveView =
+    hsilib.lookupFunction<DllIxonLiveViewFun, IxonLiveViewFun>('IxonLiveview');
 
 class HsiPlugin {
   static const MethodChannel _channel = MethodChannel('hsi_plugin');
