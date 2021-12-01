@@ -4,6 +4,7 @@
 // directory. You can also find a detailed instruction on how to add platforms in the `pubspec.yaml` at https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms.
 
 import 'dart:async';
+import 'dart:isolate';
 
 import 'package:flutter/services.dart';
 
@@ -43,6 +44,7 @@ final interOpTestPointer =
 final interOpTest = interOpTestPointer.asFunction<DoubleFun>();
 
 final initIxon = hsilib.lookupFunction<DllInitIxonFun, InitIxonFun>('InitIxon');
+
 Future<int> asyncInitIxon(
     Pointer<Utf8> model,
     Pointer<Double> vsArray,
@@ -58,8 +60,24 @@ Future<int> asyncInitIxon(
   return _completer.future;
 }
 
+void initIxonInIsolate(SendPort sendPort) {
+  final vsArrayPtr = calloc.allocate<Double>(5);
+  final hsArrayPtr = calloc.allocate<Double>(5);
+  final modelPtr = malloc.allocate<Utf8>(10);
+  initIxon(modelPtr, vsArrayPtr, hsArrayPtr, 10, 5, 5);
+  Map returnMap = Map();
+  returnMap["model"] = modelPtr.toDartString();
+  returnMap["vsArray"] = vsArrayPtr.asTypedList(5);
+  returnMap["hsArray"] = hsArrayPtr.asTypedList(5);
+  sendPort.send(returnMap);
+  calloc.free(vsArrayPtr);
+  calloc.free(hsArrayPtr);
+  malloc.free(modelPtr);
+}
+
 final closeixon =
     hsilib.lookupFunction<DllCloseIxonFun, CloseIxonFun>('CloseIxon');
+
 Future<void> asyncCloseIxon(Pointer<Double> temp) async {
   final Completer<void> _completer = Completer();
   Future.delayed(const Duration(milliseconds: 500), () {

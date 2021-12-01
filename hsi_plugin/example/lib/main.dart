@@ -1,3 +1,6 @@
+import 'dart:isolate';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -30,20 +33,20 @@ class _MyAppState extends State<MyApp> {
   int _isLiveviewInt = 0;
 
   void onPressInitButton() async {
-    final vsArrayPtr = calloc.allocate<Double>(5);
-    final hsArrayPtr = calloc.allocate<Double>(5);
-    final modelPtr = malloc.allocate<Utf8>(10);
-    await asyncInitIxon(modelPtr, vsArrayPtr, hsArrayPtr, 10, 5, 5);
-    vsArray = vsArrayPtr.asTypedList(5);
-    hsArray = hsArrayPtr.asTypedList(5);
-    modelstr = modelPtr.toDartString();
-    setState(() {
-      _returnInit = modelstr;
-      _returnClose = null;
+    ReceivePort fromInitIxonIsolate = ReceivePort();
+    fromInitIxonIsolate.listen((initIxonMap) {
+      vsArray = initIxonMap["vsArray"];
+      hsArray = initIxonMap["hsArray"];
+      modelstr = initIxonMap["model"];
     });
-    calloc.free(vsArrayPtr);
-    calloc.free(hsArrayPtr);
-    malloc.free(modelPtr);
+    Isolate initIxonIsolate =
+        await Isolate.spawn(initIxonInIsolate, fromInitIxonIsolate.sendPort)
+            .whenComplete(() {
+      setState(() {
+        _returnInit = modelstr;
+        _returnClose = null;
+      });
+    });
   }
 
   void onPressCloseButton() async {
