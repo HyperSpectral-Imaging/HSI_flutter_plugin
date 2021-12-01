@@ -70,9 +70,9 @@ void initIxonInIsolate(SendPort sendPort) {
   returnMap["vsArray"] = vsArrayPtr.asTypedList(5);
   returnMap["hsArray"] = hsArrayPtr.asTypedList(5);
   sendPort.send(returnMap);
-  calloc.free(vsArrayPtr);
-  calloc.free(hsArrayPtr);
-  malloc.free(modelPtr);
+  // calloc.free(vsArrayPtr);
+  // calloc.free(hsArrayPtr);
+  // malloc.free(modelPtr);
 }
 
 final closeixon =
@@ -85,6 +85,13 @@ Future<void> asyncCloseIxon(Pointer<Double> temp) async {
     _completer.complete();
   });
   return _completer.future;
+}
+
+void closeIxonInIsolate(SendPort sendPort) {
+  final temp = calloc.allocate<Double>(1);
+  closeixon(temp);
+  sendPort.send(temp.asTypedList(1)[0]);
+  // calloc.free(temp);
 }
 
 final setShutterMode = hsilib

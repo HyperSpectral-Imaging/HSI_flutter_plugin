@@ -38,25 +38,25 @@ class _MyAppState extends State<MyApp> {
       vsArray = initIxonMap["vsArray"];
       hsArray = initIxonMap["hsArray"];
       modelstr = initIxonMap["model"];
-    });
-    Isolate initIxonIsolate =
-        await Isolate.spawn(initIxonInIsolate, fromInitIxonIsolate.sendPort)
-            .whenComplete(() {
       setState(() {
         _returnInit = modelstr;
         _returnClose = null;
       });
     });
+    Isolate initIxonIsolate =
+        await Isolate.spawn(initIxonInIsolate, fromInitIxonIsolate.sendPort);
   }
 
   void onPressCloseButton() async {
-    final temp = calloc.allocate<Double>(1);
-    await asyncCloseIxon(temp);
-    setState(() {
-      _returnClose = temp.asTypedList(1)[0];
-      _returnInit = null;
+    ReceivePort fromCloseIxonIsolate = ReceivePort();
+    fromCloseIxonIsolate.listen((temp) {
+      setState(() {
+        _returnClose = temp;
+        _returnInit = null;
+      });
     });
-    calloc.free(temp);
+    Isolate closeIxonIsolate =
+        await Isolate.spawn(closeIxonInIsolate, fromCloseIxonIsolate.sendPort);
   }
 
   void onPressCloseShutter() {
