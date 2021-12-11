@@ -26,6 +26,7 @@ class _MyAppState extends State<MyApp> {
 
   var _returnInit;
   var _returnClose;
+  var _returnStatus;
   var modelstr = 'aaaaaaaaaa';
   List<double> vsArray = [0, 0, 0, 0, 0];
   List<double> hsArray = [0, 0, 0, 0, 0];
@@ -33,8 +34,8 @@ class _MyAppState extends State<MyApp> {
   int _isLiveviewInt = 0;
 
   void onPressInitButton() async {
-    ReceivePort fromInitIxonIsolate = ReceivePort();
-    fromInitIxonIsolate.listen((initIxonMap) {
+    ReceivePort initIxonIsolatePort = ReceivePort();
+    initIxonIsolatePort.listen((initIxonMap) {
       vsArray = initIxonMap["vsArray"];
       hsArray = initIxonMap["hsArray"];
       modelstr = initIxonMap["model"];
@@ -43,20 +44,20 @@ class _MyAppState extends State<MyApp> {
         _returnClose = null;
       });
     });
-    Isolate initIxonIsolate =
-        await Isolate.spawn(initIxonInIsolate, fromInitIxonIsolate.sendPort);
+    IxonIsolate =
+        await Isolate.spawn(initIxonInIsolate, initIxonIsolatePort.sendPort);
   }
 
   void onPressCloseButton() async {
-    ReceivePort fromCloseIxonIsolate = ReceivePort();
-    fromCloseIxonIsolate.listen((temp) {
+    ReceivePort closeIxonIsolatePort = ReceivePort();
+    closeIxonIsolatePort.listen((temp) {
       setState(() {
         _returnClose = temp;
         _returnInit = null;
       });
     });
-    Isolate closeIxonIsolate =
-        await Isolate.spawn(closeIxonInIsolate, fromCloseIxonIsolate.sendPort);
+    IxonIsolate =
+        await Isolate.spawn(closeIxonInIsolate, closeIxonIsolatePort.sendPort);
   }
 
   void onPressCloseShutter() {
@@ -67,11 +68,19 @@ class _MyAppState extends State<MyApp> {
     setShutterMode(2);
   }
 
-  void _liveviewSwitchOnChanged(bool valueChanged) {
+  // void onPressStatusButton() {
+  //   dllStatus(errPtr, 50, modulePtr);
+  //   setState(() {
+  //     _returnStatus = errPtr.toDartString();
+  //   });
+  // }
+
+  void _liveviewSwitchOnChanged(bool valueChanged) async {
     setState(() {
       _isLiveview = valueChanged;
     });
-    ixonLiveView();
+    Isolate ixonLiveviewIsolate =
+        await Isolate.spawn(liveviewInIsolate, stopPtr.address);
   }
 
   @override
@@ -125,7 +134,10 @@ class _MyAppState extends State<MyApp> {
                 onPressed: onPressCloseShutter,
                 child: const Text('close shutter')),
             Switch(value: _isLiveview, onChanged: _liveviewSwitchOnChanged),
-            Text("Liveview")
+            Text("Liveview"),
+            // TextButton(
+            //     onPressed: onPressStatusButton,
+            //     child: Text('LVDllStatus:$_returnStatus')),
           ]),
         ),
       ),
